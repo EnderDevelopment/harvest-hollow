@@ -2,7 +2,12 @@
 -- It builds a complete starter farm and handles planting, crop growth, harvesting, and seed rewards.
 
 local Players = game:GetService("Players")
+local DataStoreService = game:GetService("DataStoreService")
 local Workspace = game:GetService("Workspace")
+
+local playerDataStore = DataStoreService:GetDataStore("HarvestHollowPlayerData_v1")
+local AUTOSAVE_INTERVAL = 60
+local dataReady = {}
 
 local oldFarm = Workspace:FindFirstChild("HarvestHollow")
 if oldFarm then
@@ -179,6 +184,57 @@ for row = 0, 2 do
 	end
 end
 
+local function getPlayerKey(player)
+	return "Player_" .. player.UserId
+end
+
+local function readNumber(value, fallback)
+	return typeof(value) == "number" and math.max(0, math.floor(value)) or fallback
+end
+
+local function loadPlayerData(player)
+	local success, data = pcall(function()
+		return playerDataStore:GetAsync(getPlayerKey(player))
+	end)
+	if not success then
+		warn("Could not load data for " .. player.Name .. ": " .. tostring(data))
+		return nil, false
+	end
+	return typeof(data) == "table" and data or nil, true
+end
+
+local function savePlayerData(player)
+	if not dataReady[player] then return false end
+	local stats = player:FindFirstChild("leaderstats")
+	local inventory = player:FindFirstChild("CropInventory")
+	local upgrades = player:FindFirstChild("FarmUpgrades")
+	if not stats or not inventory or not upgrades then return false end
+
+	local data = {
+		version = 1,
+		coins = stats.Coins.Value,
+		seeds = stats.Seeds.Value,
+		crops = {},
+		upgrades = {},
+	}
+	for _, cropType in ipairs(cropColors) do
+		local count = inventory:FindFirstChild(cropType.name)
+		data.crops[cropType.name] = count and count.Value or 0
+	end
+	for _, upgradeName in ipairs({ "GrowthSpeed", "HarvestValue", "SeedCapacity" }) do
+		local level = upgrades:FindFirstChild(upgradeName)
+		data.upgrades[upgradeName] = level and level.Value or 0
+	end
+
+	local success, errorMessage = pcall(function()
+		playerDataStore:SetAsync(getPlayerKey(player), data)
+	end)
+	if not success then
+		warn("Could not save data for " .. player.Name .. ": " .. tostring(errorMessage))
+	end
+	return success
+end
+
 local function setupPlayer(player)
 	local stats = Instance.new("Folder")
 	stats.Name = "leaderstats"
@@ -211,11 +267,46 @@ local function setupPlayer(player)
 		level.Value = 0
 		level.Parent = upgrades
 	end
+
+	local data, loadedSuccessfully = loadPlayerData(player)
+	dataReady[player] = loadedSuccessfully
+	if data then
+		coins.Value = readNumber(data.coins, 0)
+		seeds.Value = readNumber(data.seeds, 6)
+		for _, cropType in ipairs(cropColors) do
+			local count = inventory:FindFirstChild(cropType.name)
+			count.Value = readNumber(data.crops and data.crops[cropType.name], 0)
+		end
+		for _, upgradeName in ipairs({ "GrowthSpeed", "HarvestValue", "SeedCapacity" }) do
+			local level = upgrades:FindFirstChild(upgradeName)
+			level.Value = math.min(3, readNumber(data.upgrades and data.upgrades[upgradeName], 0))
+		end
+	end
 end
+
 Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(function(player)
+	savePlayerData(player)
+	dataReady[player] = nil
+end)
 for _, player in ipairs(Players:GetPlayers()) do
 	setupPlayer(player)
 end
+
+task.spawn(function()
+	while true do
+		task.wait(AUTOSAVE_INTERVAL)
+		for _, player in ipairs(Players:GetPlayers()) do
+			savePlayerData(player)
+		end
+	end
+end)
+
+game:BindToClose(function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		savePlayerData(player)
+	end
+end)
 
 -- The seed stand gives a small starter refill when a player interacts with it.
 local sellPrompt = Instance.new("ProximityPrompt")

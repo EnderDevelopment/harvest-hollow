@@ -1,31 +1,24 @@
-# Roblox Farming Map Open Source Project
+# Harvest Hollow Roblox Farming Game
 
-Harvest Hollow is an open source Roblox farming map and starter farming game built with Lua scripts for Roblox Studio. It provides a playable farm environment with garden plots, crop planting, crop growth, harvesting, crop inventory, coin rewards, seed refills, farm upgrades, interactive stands, and a player HUD.
+Harvest Hollow is an open-source Roblox farming game starter project that builds a playable farming map and adds crop planting, growth, harvesting, selling, upgrades, player stats, and a simple HUD.
 
 ## Install
 
-1. Create or open a Roblox experience in Roblox Studio.
-2. In Explorer, create a Script inside `ServerScriptService`.
-3. Copy the contents of `FarmGame.server.lua` into the Script.
-4. In Explorer, create a LocalScript inside `StarterPlayer > StarterPlayerScripts`.
-5. Copy the contents of `FarmGame.client.lua` into the LocalScript.
-6. Save and run the experience in Play mode.
-
-The server script creates the farm map and gameplay objects when the server starts. The client script creates the player HUD after the player joins.
+1. Open your Roblox experience in Roblox Studio.
+2. Add `FarmGame.server.lua` as a Script in `ServerScriptService`.
+3. Add `FarmGame.client.lua` as a LocalScript in `StarterPlayer > StarterPlayerScripts`.
+4. For saved player progress, publish the experience and enable Studio access to API services in its security settings.
 
 ## Use
 
-1. Walk to an empty garden bed.
-2. Press the displayed interaction key to plant a crop.
-3. Wait for the crop to grow.
-4. Return to the garden bed and interact with it again to harvest.
-5. Harvested crops appear in the HUD inventory.
-6. Visit the Crop Market stand and interact with it to sell all stored crops for coins.
-7. Visit the Seed Stand to receive up to five additional seeds, limited by your current seed capacity.
-8. Visit the Farm Upgrades stand to purchase the next available upgrade when you have enough coins.
-9. Use the HUD to monitor coins, seeds, and crop inventory.
+1. Run the experience. The server script builds the farm map and garden beds.
+2. Walk to an empty garden bed and press E to plant a seed. Each bed produces its assigned crop type.
+3. Return when the crop is ready and press E to harvest it.
+4. Visit the seed stand to refill up to five seeds, subject to your seed capacity.
+5. Use the crop market to sell all harvested crops for coins.
+6. Use the farm upgrades stand to buy the cheapest available upgrade you can afford: faster growth, better crop prices, or increased seed capacity.
 
-The available crops are Carrot, Wheat, and Pumpkin. Growth speed, harvest value, and seed capacity can each be upgraded up to level 3. Player values are created when the player joins the server.
+Player stats and crop inventory appear in the HUD. Progress is saved through Roblox DataStore when data access is available.
 
 ---
 
